@@ -1,13 +1,81 @@
-{% extends 'pages/base.html'%}
+{% extends 'pages/base.html' %}
 
+{% block title %}Welcome · CRUD App{% endblock %}
 
 {% block content %}
-    <a href="{% url 'login' %}"Login /a>
-    <a href="{% url 'register' %}"Register/a>
-        <p> {{user}} </p>
+<section class="hero-section py-5">
+  <div class="row align-items-center justify-content-between g-4">
+    <div class="col-lg-6">
+      <h1 class="display-5 fw-bold mb-3">Build, Read, Update, Delete — beautifully</h1>
+      <p class="lead text-secondary mb-4">A clean Django + Bootstrap starter to manage users and content with a delightful UI.</p>
+      {% if user.is_authenticated %}
+        <div class="d-flex gap-3">
+          <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+          <a href="{% url 'logout' %}" class="btn btn-outline-primary btn-lg">Logout</a>
+          <span class="d-none d-lg-inline align-self-center text-muted">Signed in as {{ user.first_name|default:user.username }}</span>
+        </div>
+      {% else %}
+        <div class="d-flex gap-3">
+          <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Get Started</a>
+          <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">Login</a>
+        </div>
+      {% endif %}
+    </div>
+    <div class="col-lg-5">
+      <div class="glass card border-0 shadow hero-card">
+        <div class="card-body p-4 p-lg-5">
+          <h5 class="mb-3">Why this starter?</h5>
+          <ul class="mb-0 text-secondary">
+            <li class="mb-2">Modern Bootstrap 5 styles with custom theming</li>
+            <li class="mb-2">Crispy Forms ready for fast, polished forms</li>
+            <li class="mb-2">Responsive layout, clean components, and alerts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-
-
-
-
+{% if not user.is_authenticated %}
+<section class="py-5">
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5>Authenticate</h5>
+          <p class="text-muted mb-0">Create an account to unlock your personal dashboard and start organizing your work.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5>Collaborate</h5>
+          <p class="text-muted mb-0">Work with your team and keep progress in sync with tasks and activity.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5>Customize</h5>
+          <p class="text-muted mb-0">Switch themes, tailor forms, and extend the app as your needs grow.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% else %}
+<section class="py-5">
+  <div class="card shadow-sm border-0">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <h5 class="mb-1">Jump back into your work</h5>
+        <p class="text-muted mb-0">Head over to your dashboard to see stats and recent activity.</p>
+      </div>
+      <a href="{% url 'dashboard' %}" class="btn btn-primary">Open Dashboard</a>
+    </div>
+  </div>
+  </section>
+{% endif %}
 {% endblock %}

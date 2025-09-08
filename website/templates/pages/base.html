@@ -4,33 +4,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Document</title>
-    <link rel="stylesheet" href="{% static 'css/bootstrap.css'%}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>{% block title %}CRUD App{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-
+    <script>
+      // Set theme early to avoid FOUC and inform Bootstrap variables
+      (function() {
+        try {
+          const saved = localStorage.getItem('theme') || 'auto';
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = saved === 'auto' ? (prefersDark ? 'dark' : 'light') : saved;
+          const root = document.documentElement;
+          root.setAttribute('data-theme', theme);
+          root.setAttribute('data-bs-theme', theme);
+        } catch (e) { /* no-op */ }
+      })();
+    </script>
 </head>
 
-<body>
-    {% include 'components/navbar.html'%}
-    <div class="container">
+<body class="app-body">
+    <a href="#main" class="skip-link visually-hidden-focusable">Skip to content</a>
+    {% include 'components/navbar.html' %}
+
+    <main id="main" class="container py-4">
         {% if messages %}
-            <div class="mt-4">
+            <div class="mt-2">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
-    {% block content%}
-    {% endblock %}
-    </div>
-    
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="app-footer text-center py-4">
+        <div class="container">
+            <small class="text-muted">© {% now 'Y' %} CRUD App — Crafted with Django & Bootstrap</small>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script>
+      // Theme toggle handler + initial sync
+      (function() {
+        const root = document.documentElement;
+        const btn = document.getElementById('themeToggle');
+        function setTheme(theme) {
+          root.setAttribute('data-theme', theme);
+          root.setAttribute('data-bs-theme', theme);
+          try { localStorage.setItem('theme', theme); } catch (e) {}
+          if (btn) {
+            const dark = theme === 'dark';
+            btn.setAttribute('aria-pressed', String(dark));
+            btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+            btn.innerText = dark ? 'Light' : 'Dark';
+          }
+        }
+        // Initialize button state to current theme
+        const current = root.getAttribute('data-theme') || 'light';
+        setTheme(current);
+
+        if (btn) {
+          btn.addEventListener('click', function() {
+            const now = root.getAttribute('data-theme') || 'light';
+            setTheme(now === 'dark' ? 'light' : 'dark');
+          });
+        }
+      })();
+    </script>
 </body>
-
-<script src="{% static 'js/bootstrap.js' %}"></script>
-
 </html>

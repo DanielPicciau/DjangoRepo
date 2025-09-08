@@ -1,0 +1,70 @@
+{% extends 'pages/base.html' %}
+
+{% block title %}Dashboard · CRUD App{% endblock %}
+
+{% block content %}
+<section class="py-3 py-lg-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Welcome back, {{ user.first_name|default:user.username }} 👋</h1>
+      <p class="text-muted mb-0">Here’s a quick snapshot of your workspace.</p>
+    </div>
+    <div class="d-flex gap-2">
+      {% for a in actions %}
+        <a href="{{ a.href }}" class="btn btn-{{ a.style }}">{{ a.label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="row g-3 g-lg-4 mb-4">
+    {% for s in stats %}
+    <div class="col-12 col-sm-6 col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">{{ s.label }}</div>
+            <div class="fs-3 fw-semibold">{{ s.value }}</div>
+          </div>
+          <div class="text-primary opacity-75 fs-3">
+            <i class="{{ s.icon }}"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-3 g-lg-4">
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header border-0 pb-0"><h5 class="mb-0">Recent Activity</h5></div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            {% for r in recent %}
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>{{ r.title }}</span>
+              <small class="text-muted">{{ r.time }}</small>
+            </li>
+            {% empty %}
+            <li class="list-group-item px-0 text-muted">No recent activity yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header border-0 pb-0"><h5 class="mb-0">Quick Tips</h5></div>
+        <div class="card-body">
+          <ul class="mb-0 text-muted">
+            <li class="mb-2">Use the theme toggle to match your system.</li>
+            <li class="mb-2">Try creating a project with the New Project button.</li>
+            <li class="mb-0">Invite teammates to collaborate and track tasks.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
