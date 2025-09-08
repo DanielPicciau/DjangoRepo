@@ -3,6 +3,24 @@
 
 {% block content %}
 
+<body>
+    <br>
+    <div>
+        <h3> Create your account</h3>
+        <h5> Manage your clients</h5>
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <br>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+        <br>"
+
+    </div>
+</body>
+        
+{% comment %} 
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -23,6 +41,6 @@
             </div>
         </div>
     </div>
-</div>
+</div> {% endcomment %}
 
 {% endblock %}
