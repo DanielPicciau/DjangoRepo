@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login as auth_login, authenticate
+from django.contrib.auth import login as auth_login, authenticate, logout
 from django.contrib import messages
 from .forms import CreateUserForm, LoginForm
 
@@ -35,3 +35,8 @@ def register(request):
 
     context = {'form': form}
     return render(request, 'pages/register.html', context)
+
+def logout_user(request):
+    logout(request)
+    messages.info(request, "You have been logged out successfully.")
+    return redirect('login')
