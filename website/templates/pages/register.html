@@ -1,37 +1,18 @@
 {% extends 'pages/base.html'%}
 
-
 {% block content %}
 
-<body>
-    <br>
-    <div>
-        <h3> Create your account</h3>
-        <h5> Manage your clients</h5>
-
-        <form method="POST" novalidate>
-            {% csrf_token %}
-            {{ form.as_p }}
-            <br>
-            <button type="submit" class="btn btn-primary w-100">Register</button>
-        </form>
-        <br>"
-
-    </div>
-</body>
-        
-{% comment %} 
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="text-center">Register</h3>
+                    <h3 class="text-center">Create Your Account</h3>
                 </div>
                 <div class="card-body">
                     <form method="POST" novalidate>
                         {% csrf_token %}
-                        {{ form.as_p }}
+                        {{ form }}
                         <button type="submit" class="btn btn-primary w-100">Register</button>
                     </form>
                 </div>
@@ -41,6 +22,6 @@
             </div>
         </div>
     </div>
-</div> {% endcomment %}
+</div>
 
 {% endblock %}

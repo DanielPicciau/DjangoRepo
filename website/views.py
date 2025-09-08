@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, authenticate
+from django.contrib import messages
 from .forms import CreateUserForm, LoginForm
 
 # Create your views here.
@@ -25,6 +26,8 @@ def register(request):
         form = CreateUserForm(request.POST)
         if form.is_valid():
             form.save()
+            # Add a success message for the user
+            messages.success(request, 'Account created successfully! Please log in.')
             # Redirect to the login page after successful registration
             return redirect('login')
     else:
