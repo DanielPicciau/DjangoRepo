@@ -31,6 +31,28 @@ def dashboard(request):
         'actions': actions,
     })
 
+@login_required
+def new_project(request):
+    if request.method == 'POST':
+        name = (request.POST.get('name') or '').strip()
+        desc = (request.POST.get('description') or '').strip()
+        if name:
+            messages.success(request, f'Project "{name}" created (demo).')
+            return redirect('dashboard')
+        messages.error(request, 'Please enter a project name.')
+    return render(request, 'pages/new_project.html')
+
+@login_required
+def new_task(request):
+    if request.method == 'POST':
+        title = (request.POST.get('title') or '').strip()
+        due = (request.POST.get('due') or '').strip()
+        if title:
+            messages.success(request, f'Task "{title}" added (demo).')
+            return redirect('dashboard')
+        messages.error(request, 'Please enter a task title.')
+    return render(request, 'pages/new_task.html')
+
 def login(request):
     if request.method == 'POST':
         form = LoginForm(request=request, data=request.POST)

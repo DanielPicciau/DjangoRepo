@@ -1,0 +1,37 @@
+{% extends 'pages/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}New Task · CRUD App{% endblock %}
+
+{% block content %}
+<section class="py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+      <div class="card shadow border-0">
+        <div class="card-header border-0 pt-4">
+          <h3 class="mb-0">Add a New Task</h3>
+          <p class="text-muted mb-0">Set a title and optional due date.</p>
+        </div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="taskTitle" class="form-label">Task Title</label>
+              <input type="text" class="form-control" id="taskTitle" name="title" placeholder="e.g. Wireframe UI" required>
+            </div>
+            <div class="mb-3">
+              <label for="taskDue" class="form-label">Due Date</label>
+              <input type="date" class="form-control" id="taskDue" name="due">
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">Create Task</button>
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
