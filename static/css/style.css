@@ -154,6 +154,59 @@ main.container { animation: fadeIn .3s ease-out; }
 .navbar .nav-item { display: flex; align-items: center; }
 .navbar .nav-link { padding-top: .5rem; padding-bottom: .5rem; }
 
+/* Theme switch sizing for compact navbar fit */
+.navbar-theme-switch .form-check-input { cursor: pointer; }
+.navbar-theme-switch .form-check-label { margin-left: .5rem; cursor: pointer; }
+@media (max-width: 991.98px) {
+  .navbar-theme-switch .form-check-label { display: none; }
+}
+
+/* Make staff toggle look and feel like navbar theme switch */
+.theme-like-switch .form-check-input {
+  cursor: pointer;
+  width: 2.25rem;
+  height: 1.1rem;
+  border: 1px solid var(--bs-border-color);
+  background-color: rgba(0,0,0,.15);
+  border-radius: 999px;
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+[data-theme="dark"] .theme-like-switch .form-check-input {
+  background-color: rgba(255,255,255,.15);
+  border-color: var(--bs-border-color);
+}
+.theme-like-switch .form-check-input:focus {
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
+.theme-like-switch .form-check-input::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: .15rem;
+  width: .95rem;
+  height: .95rem;
+  border-radius: 50%;
+  background: #ef4444; /* red knob when OFF */
+  transform: translateY(-50%);
+  transition: left .15s ease, background-color .15s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.theme-like-switch .form-check-input:checked {
+  background-color: var(--brand);
+  border-color: var(--brand);
+}
+.theme-like-switch .form-check-input:checked::before {
+  left: calc(100% - .15rem - .95rem);
+  background: #ffffff;
+}
+
+/* Disabled buttons (anchors) should not be interactive */
+.btn.disabled, .btn:disabled { pointer-events: none; opacity: .65; }
+
 /* Touch targets */
 .btn { min-height: 40px; }
 @media (max-width: 575.98px) {

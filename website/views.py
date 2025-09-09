@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, authenticate, logout
 from django.contrib import messages
-from .forms import CreateUserForm, LoginForm, ClientForm, UserEditForm
+from .forms import CreateUserForm, LoginForm, ClientForm, UserEditForm, UserProfileForm, AdminCreateUserForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.conf import settings
 from .models import Client
 
 # Create your views here.
@@ -12,8 +13,12 @@ def home(request):
 
 @login_required(login_url='login')
 def dashboard(request):
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'The dashboard is restricted to staff users.')
+        return redirect('home')
     users = User.objects.all().order_by('-date_joined')
-    clients = Client.objects.filter(created_by=request.user).order_by('-created_at')
+    # Show all clients so you can manage any of them
+    clients = Client.objects.all().order_by('-created_at')
     stats = [
         {"label": "Total Users", "value": users.count()},
         {"label": "Your Clients", "value": clients.count()},
@@ -28,8 +33,11 @@ def dashboard(request):
         'clients': clients,
     })
 
-@login_required
+@login_required(login_url='login')
 def new_project(request):
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
     if request.method == 'POST':
         name = (request.POST.get('name') or '').strip()
         desc = (request.POST.get('description') or '').strip()
@@ -39,8 +47,11 @@ def new_project(request):
         messages.error(request, 'Please enter a project name.')
     return render(request, 'pages/new_project.html')
 
-@login_required
+@login_required(login_url='login')
 def new_task(request):
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
     if request.method == 'POST':
         title = (request.POST.get('title') or '').strip()
         due = (request.POST.get('due') or '').strip()
@@ -52,18 +63,33 @@ def new_task(request):
 
 @login_required(login_url='login')
 def new_user(request):
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
+    FormClass = AdminCreateUserForm if request.user.is_staff else CreateUserForm
     if request.method == 'POST':
-        form = CreateUserForm(request.POST)
+        form = FormClass(request.POST)
         if form.is_valid():
-            user = form.save()
+            # Save without commit to set role flags safely
+            user = form.save(commit=False)
+            # Staff flag already applied in AdminCreateUserForm.save(commit=False) if used
+            # Superuser flag: only allow superusers to set it
+            if hasattr(form, 'cleaned_data') and 'is_superuser' in form.cleaned_data and request.user.is_superuser:
+                user.is_superuser = form.cleaned_data.get('is_superuser') or False
+            else:
+                user.is_superuser = False
+            user.save()
             messages.success(request, f'User "{user.username}" created successfully.')
             return redirect('dashboard')
     else:
-        form = CreateUserForm()
+        form = FormClass()
     return render(request, 'pages/new_user.html', { 'form': form })
 
 @login_required(login_url='login')
 def new_client(request):
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
     if request.method == 'POST':
         form = ClientForm(request.POST)
         if form.is_valid():
@@ -78,7 +104,11 @@ def new_client(request):
 
 @login_required(login_url='login')
 def edit_client(request, pk):
-    client = get_object_or_404(Client, pk=pk, created_by=request.user)
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
+    # Allow editing any client
+    client = get_object_or_404(Client, pk=pk)
     if request.method == 'POST':
         form = ClientForm(request.POST, instance=client)
         if form.is_valid():
@@ -91,7 +121,11 @@ def edit_client(request, pk):
 
 @login_required(login_url='login')
 def delete_client(request, pk):
-    client = get_object_or_404(Client, pk=pk, created_by=request.user)
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
+    # Allow deleting any client
+    client = get_object_or_404(Client, pk=pk)
     if request.method == 'POST':
         name = client.name
         client.delete()
@@ -101,36 +135,88 @@ def delete_client(request, pk):
 
 @login_required(login_url='login')
 def edit_user(request, pk):
-    if not request.user.is_staff:
-        messages.error(request, 'You do not have permission to edit users.')
-        return redirect('dashboard')
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
     usr = get_object_or_404(User, pk=pk)
+    # Allow any logged-in user to edit any user; staff see staff field, others don't
+    FormClass = UserEditForm if request.user.is_staff else UserProfileForm
+
     if request.method == 'POST':
-        form = UserEditForm(request.POST, instance=usr)
+        form = FormClass(request.POST, instance=usr)
         if form.is_valid():
             form.save()
             messages.success(request, f'User "{usr.username}" updated.')
             return redirect('dashboard')
     else:
-        form = UserEditForm(instance=usr)
+        form = FormClass(instance=usr)
     return render(request, 'pages/edit_user.html', { 'form': form, 'usr': usr })
 
 @login_required(login_url='login')
 def delete_user(request, pk):
-    if not request.user.is_staff:
-        messages.error(request, 'You do not have permission to delete users.')
-        return redirect('dashboard')
+    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
     usr = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
         username = usr.username
-        # Prevent self-deletion to avoid logging current user out unexpectedly
-        if usr == request.user:
-            messages.error(request, 'You cannot delete your own account here.')
-            return redirect('dashboard')
         usr.delete()
-        messages.success(request, f'User "{username}" removed.')
-        return redirect('dashboard')
+        if usr == request.user or username == request.user.username:
+            messages.success(request, 'Your account was deleted. You have been logged out.')
+            logout(request)
+            return redirect('login')
+        else:
+            messages.success(request, f'User "{username}" removed.')
+            return redirect('dashboard')
     return render(request, 'pages/delete_user.html', { 'usr': usr })
+
+@login_required(login_url='login')
+def toggle_user_staff(request, pk):
+    if request.method != 'POST':
+        return redirect('dashboard')
+    # Only staff or superuser may toggle staff
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'You do not have permission to change staff status.')
+        return redirect('dashboard')
+    usr = get_object_or_404(User, pk=pk)
+    values = request.POST.getlist('is_staff')
+    new_is_staff = '1' in values
+    was_staff = usr.is_staff
+    # Staff cannot change staff flag for superusers
+    if request.user.is_staff and not request.user.is_superuser and usr.is_superuser:
+        messages.error(request, 'Admins cannot modify superuser roles.')
+        return redirect('dashboard')
+    usr.is_staff = new_is_staff
+    usr.save()
+    if usr == request.user and getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and was_staff and not new_is_staff:
+        messages.info(request, 'You removed your own staff access. Dashboard is staff-only; you have been redirected.')
+        return redirect('home')
+    messages.success(request, f'Updated staff status for "{usr.username}" to {"staff" if new_is_staff else "non-staff"}.')
+    return redirect('dashboard')
+
+@login_required(login_url='login')
+def toggle_user_superuser(request, pk):
+    if request.method != 'POST':
+        return redirect('dashboard')
+    # Only superusers may toggle superuser
+    if not request.user.is_superuser:
+        messages.error(request, 'Only superusers can change superuser status.')
+        return redirect('dashboard')
+    usr = get_object_or_404(User, pk=pk)
+    values = request.POST.getlist('is_superuser')
+    new_is_su = '1' in values
+    # Prevent removing last superuser
+    if usr.is_superuser and not new_is_su:
+        others = User.objects.filter(is_superuser=True).exclude(pk=usr.pk).exists()
+        if not others:
+            messages.error(request, 'Cannot remove superuser status from the last superuser.')
+            return redirect('dashboard')
+    usr.is_superuser = new_is_su
+    usr.is_staff = usr.is_staff or new_is_su  # superusers are implicitly staff
+    usr.save()
+    # If self-demoted from superuser and dashboard is staff-only, still allowed as staff
+    messages.success(request, f'Updated superuser status for "{usr.username}" to {"superuser" if new_is_su else "standard"}.')
+    return redirect('dashboard')
 
 def login(request):
     if request.method == 'POST':

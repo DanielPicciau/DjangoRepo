@@ -55,24 +55,30 @@
 
     <script src="{% static 'js/bootstrap.js' %}"></script>
     <script>
-      // Theme toggle handler + initial sync
+      // Theme toggle handler + initial sync (supports button or switch control)
       (function() {
         const root = document.documentElement;
         const btn = document.getElementById('themeToggle');
+        const sw = document.getElementById('themeSwitch');
+        const swLabel = document.querySelector('label[for="themeSwitch"]');
+
         function setTheme(theme) {
           root.setAttribute('data-theme', theme);
           root.setAttribute('data-bs-theme', theme);
           // Sync all navbars so toggler/icon colors follow theme
           document.querySelectorAll('.navbar').forEach(function(el){ el.setAttribute('data-bs-theme', theme); });
           try { localStorage.setItem('theme', theme); } catch (e) {}
+          const isDark = theme === 'dark';
           if (btn) {
-            const dark = theme === 'dark';
-            btn.setAttribute('aria-pressed', String(dark));
-            btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
-            btn.innerText = dark ? 'Light' : 'Dark';
+            btn.setAttribute('aria-pressed', String(isDark));
+            btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+            btn.innerText = isDark ? 'Light' : 'Dark';
           }
+          if (sw) { sw.checked = isDark; }
+          if (swLabel) { swLabel.textContent = isDark ? 'Dark' : 'Light'; }
         }
-        // Initialize button state to current theme
+
+        // Initialize control state to current theme
         const current = root.getAttribute('data-theme') || 'light';
         setTheme(current);
 
@@ -80,6 +86,11 @@
           btn.addEventListener('click', function() {
             const now = root.getAttribute('data-theme') || 'light';
             setTheme(now === 'dark' ? 'light' : 'dark');
+          });
+        }
+        if (sw) {
+          sw.addEventListener('change', function() {
+            setTheme(sw.checked ? 'dark' : 'light');
           });
         }
       })();

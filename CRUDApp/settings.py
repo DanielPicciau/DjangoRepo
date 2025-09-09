@@ -131,3 +131,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Feature flags
+# When True, only staff users can access the dashboard and related management views
+DASHBOARD_STAFF_ONLY = False

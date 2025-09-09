@@ -64,3 +64,30 @@ class UserEditForm(forms.ModelForm):
         self.fields['email'].widget = forms.EmailInput(attrs={'class': 'form-control mb-3', 'placeholder': 'Email'})
         # Render is_staff as checkbox with spacing
         self.fields['is_staff'].widget = forms.CheckboxInput(attrs={'class': 'form-check-input'})
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("username", "first_name", "last_name", "email")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].widget = TextInput(attrs={'class': 'form-control mb-3', 'placeholder': 'Username'})
+        self.fields['first_name'].widget = TextInput(attrs={'class': 'form-control mb-3', 'placeholder': 'First name'})
+        self.fields['last_name'].widget = TextInput(attrs={'class': 'form-control mb-3', 'placeholder': 'Last name'})
+        self.fields['email'].widget = forms.EmailInput(attrs={'class': 'form-control mb-3', 'placeholder': 'Email'})
+
+
+class AdminCreateUserForm(CreateUserForm):
+    is_staff = forms.BooleanField(required=False, label='Staff user', widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+    is_superuser = forms.BooleanField(required=False, label='Superuser', widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+
+    def save(self, commit=True):
+        # Allow view to pass commit=False and finalize role flags based on permissions
+        user = super().save(commit=False)
+        user.is_staff = self.cleaned_data.get('is_staff', False)
+        # is_superuser will be set in the view based on current user's permission
+        if commit:
+            user.save()
+        return user
