@@ -1,0 +1,29 @@
+{% extends 'pages/base.html' %}
+
+{% block title %}Remove User · CRUD App{% endblock %}
+
+{% block content %}
+<section class="py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+      <div class="card shadow border-0">
+        <div class="card-header border-0 pt-4">
+          <h3 class="mb-0">Remove User</h3>
+          <p class="text-muted mb-0">This will delete <strong>{{ usr.username }}</strong> and cannot be undone.</p>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <div class="alert alert-warning">Double-check before proceeding. You cannot delete yourself from here.</div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-danger">Delete</button>
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

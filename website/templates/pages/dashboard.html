@@ -9,10 +9,6 @@
       <h1 class="h3 mb-1">Welcome back, {{ user.first_name|default:user.username }} 👋</h1>
       <p class="text-muted mb-0">Here’s a quick snapshot of your workspace.</p>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-      <a href="{% url 'project_new' %}" class="btn btn-primary">New Project</a>
-      <a href="{% url 'task_new' %}" class="btn btn-outline-primary">New Task</a>
-    </div>
   </div>
 
   <div class="row g-3 g-lg-4 mb-4">
@@ -24,9 +20,6 @@
             <div class="text-muted small">{{ s.label }}</div>
             <div class="fs-3 fw-semibold">{{ s.value }}</div>
           </div>
-          <div class="text-primary opacity-75 fs-3">
-            <i class="{{ s.icon }}"></i>
-          </div>
         </div>
       </div>
     </div>
@@ -34,6 +27,107 @@
   </div>
 
   <div class="row g-3 g-lg-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header border-0 pb-0 d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">All Users</h5>
+          <a href="{% url 'user_new' %}" class="btn btn-sm btn-primary">Add User</a>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th scope="col">User</th>
+                  <th scope="col" class="d-none d-sm-table-cell">Name</th>
+                  <th scope="col" class="d-none d-md-table-cell">Email</th>
+                  <th scope="col" class="d-none d-lg-table-cell">Joined</th>
+                  <th scope="col" class="d-none d-lg-table-cell">Staff</th>
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in users %}
+                <tr>
+                  <td class="fw-semibold">
+                    <span class="avatar-sm me-2">{{ u.username|first|upper }}</span>
+                    {{ u.username }}
+                  </td>
+                  <td class="d-none d-sm-table-cell">{{ u.first_name }} {{ u.last_name }}</td>
+                  <td class="d-none d-md-table-cell"><a href="mailto:{{ u.email }}">{{ u.email|default:'—' }}</a></td>
+                  <td class="d-none d-lg-table-cell"><small class="text-muted">{{ u.date_joined|date:'Y-m-d H:i' }}</small></td>
+                  <td class="d-none d-lg-table-cell">
+                    {% if u.is_staff %}
+                      <span class="badge text-bg-primary">Yes</span>
+                    {% else %}
+                      <span class="badge text-bg-secondary">No</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-2">
+                      <a href="{% url 'user_edit' u.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                      <a href="{% url 'user_delete' u.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-muted">No users found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 g-lg-4 mt-1">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header border-0 pb-0 d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Your Clients</h5>
+          <a href="{% url 'client_new' %}" class="btn btn-sm btn-primary">Add Client</a>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col" class="d-none d-sm-table-cell">Company</th>
+                  <th scope="col" class="d-none d-md-table-cell">Email</th>
+                  <th scope="col" class="d-none d-lg-table-cell">Phone</th>
+                  <th scope="col" class="d-none d-lg-table-cell">Added</th>
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in clients %}
+                <tr>
+                  <td class="fw-semibold">{{ c.name }}</td>
+                  <td class="d-none d-sm-table-cell">{{ c.company|default:'—' }}</td>
+                  <td class="d-none d-md-table-cell"><a href="mailto:{{ c.email }}">{{ c.email|default:'—' }}</a></td>
+                  <td class="d-none d-lg-table-cell">{{ c.phone|default:'—' }}</td>
+                  <td class="d-none d-lg-table-cell"><small class="text-muted">{{ c.created_at|date:'Y-m-d H:i' }}</small></td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-2">
+                      <a href="{% url 'client_edit' c.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                      <a href="{% url 'client_delete' c.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-muted">No clients yet. Start by adding one.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 g-lg-4 mt-1">
     <div class="col-lg-7">
       <div class="card shadow-sm border-0 h-100">
         <div class="card-header border-0 pb-0"><h5 class="mb-0">Recent Activity</h5></div>
@@ -57,7 +151,7 @@
         <div class="card-body">
           <ul class="mb-0 text-muted">
             <li class="mb-2">Use the theme toggle to match your system.</li>
-            <li class="mb-2">Try creating a project with the New Project button.</li>
+            <li class="mb-2">Create a project or a task to get started.</li>
             <li class="mb-0">Invite teammates to collaborate and track tasks.</li>
           </ul>
         </div>

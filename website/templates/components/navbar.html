@@ -16,21 +16,21 @@
         </li>
         {% endif %}
       </ul>
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex flex-column flex-lg-row align-items-center gap-2 w-100 w-lg-auto mt-3 mt-lg-0">
         <button id="themeToggle" class="btn btn-outline-primary btn-sm" type="button" aria-pressed="false" title="Switch to dark mode">Dark</button>
-        <ul class="navbar-nav ms-auto align-items-lg-center">
+        <ul class="navbar-nav ms-lg-auto align-items-center">
           {% if user.is_authenticated %}
-            <li class="nav-item">
+            <li class="nav-item d-flex align-items-center">
               <span class="nav-link">Hello, {{ user.first_name|default:user.username }}</span>
             </li>
-            <li class="nav-item">
+            <li class="nav-item d-flex align-items-center">
               <a class="btn btn-primary btn-sm ms-lg-2" href="{% url 'logout' %}">Logout</a>
             </li>
           {% else %}
             <li class="nav-item">
               <a class="nav-link {% if url_name == 'register' %}active{% endif %}" href="{% url 'register' %}">Register</a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item d-flex align-items-center">
               <a class="btn btn-primary btn-sm ms-lg-2" href="{% url 'login' %}">Login</a>
             </li>
           {% endif %}

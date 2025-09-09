@@ -9,15 +9,15 @@
       <h1 class="display-5 fw-bold mb-3">Build, Read, Update, Delete — beautifully</h1>
       <p class="lead text-secondary mb-4">A clean Django + Bootstrap starter to manage users and content with a delightful UI.</p>
       {% if user.is_authenticated %}
-        <div class="d-flex gap-3">
-          <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
-          <a href="{% url 'logout' %}" class="btn btn-outline-primary btn-lg">Logout</a>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg w-100 w-sm-auto">Go to Dashboard</a>
+          <a href="{% url 'logout' %}" class="btn btn-outline-primary btn-lg w-100 w-sm-auto">Logout</a>
           <span class="d-none d-lg-inline align-self-center text-muted">Signed in as {{ user.first_name|default:user.username }}</span>
         </div>
       {% else %}
-        <div class="d-flex gap-3">
-          <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Get Started</a>
-          <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">Login</a>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{% url 'register' %}" class="btn btn-primary btn-lg w-100 w-sm-auto">Get Started</a>
+          <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg w-100 w-sm-auto">Login</a>
         </div>
       {% endif %}
     </div>
