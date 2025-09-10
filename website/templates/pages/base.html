@@ -95,5 +95,20 @@
         }
       })();
     </script>
+    <script>
+      // Auto-close mobile navbar after clicking a link or button inside it
+      (function(){
+        var collapse = document.getElementById('navbarColor02');
+        if (!collapse || typeof bootstrap === 'undefined') return;
+        document.addEventListener('click', function(e){
+          var target = e.target.closest('.navbar-collapse .nav-link, .navbar-collapse .btn');
+          if (!target) return;
+          if (window.matchMedia('(min-width: 992px)').matches) return; // only on mobile
+          var instance = bootstrap.Collapse.getInstance(collapse);
+          if (!instance) instance = new bootstrap.Collapse(collapse, {toggle: false});
+          instance.hide();
+        });
+      })();
+    </script>
 </body>
 </html>

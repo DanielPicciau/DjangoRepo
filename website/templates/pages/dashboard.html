@@ -1,9 +1,19 @@
 {% extends 'pages/base.html' %}
+{% load static %}
+{% load avatar %}
 
 {% block title %}Dashboard · CRUD App{% endblock %}
 
 {% block content %}
 <section class="py-3 py-lg-4">
+  {% if request.user.is_superuser and pending_access_count %}
+    <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+      <div>
+        <strong>{{ pending_access_count }}</strong> dashboard access request{{ pending_access_count|pluralize }} pending.
+      </div>
+      <a href="#pending-requests" class="btn btn-sm btn-outline-dark">Review</a>
+    </div>
+  {% endif %}
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <div>
       <h1 class="h3 mb-1">Welcome back, {{ user.first_name|default:user.username }} 👋</h1>
@@ -35,7 +45,7 @@
         </div>
         <div class="card-body">
           <div class="table-responsive">
-            <table class="table align-middle">
+            <table class="table align-middle table-aligned">
               <thead>
                 <tr>
                   <th scope="col">User</th>
@@ -44,15 +54,19 @@
                   <th scope="col" class="d-none d-lg-table-cell">Joined</th>
                   <th scope="col" class="d-none d-lg-table-cell">Admin</th>
                   <th scope="col" class="d-none d-lg-table-cell">Superuser</th>
-                  <th scope="col" class="text-end">Actions</th>
+                  <th scope="col" class="text-end actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for u in users %}
                 <tr>
                   <td class="fw-semibold">
-                    <span class="avatar-sm me-2">{{ u.username|slice:":1"|upper }}</span>
-                    {{ u.username }}
+                    <div class="d-flex align-items-center gap-2">
+                      {% with ap=u|avatar_path %}
+                      <img class="avatar-img" src="{% static ap %}" alt="{{ u.username }} avatar" width="32" height="32">
+                      {% endwith %}
+                      {{ u.username }}
+                    </div>
                   </td>
                   <td class="d-none d-sm-table-cell">{{ u.first_name }} {{ u.last_name }}</td>
                   <td class="d-none d-md-table-cell"><a href="mailto:{{ u.email }}">{{ u.email|default:'—' }}</a></td>
@@ -79,7 +93,7 @@
                       </div>
                     </form>
                   </td>
-                  <td class="text-end">
+                  <td class="text-end actions-col">
                     <div class="d-inline-flex gap-2">
                       <a href="{% url 'user_edit' u.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
                       <a href="{% url 'user_delete' u.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
@@ -87,7 +101,7 @@
                   </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="text-muted">No users found.</td></tr>
+                <tr><td colspan="7" class="text-muted">No users found.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -106,7 +120,7 @@
         </div>
         <div class="card-body">
           <div class="table-responsive">
-            <table class="table align-middle">
+            <table class="table align-middle table-aligned">
               <thead>
                 <tr>
                   <th scope="col">Name</th>
@@ -114,7 +128,7 @@
                   <th scope="col" class="d-none d-md-table-cell">Email</th>
                   <th scope="col" class="d-none d-lg-table-cell">Phone</th>
                   <th scope="col" class="d-none d-lg-table-cell">Added</th>
-                  <th scope="col" class="text-end">Actions</th>
+                  <th scope="col" class="text-end actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -125,7 +139,7 @@
                   <td class="d-none d-md-table-cell"><a href="mailto:{{ c.email }}">{{ c.email|default:'—' }}</a></td>
                   <td class="d-none d-lg-table-cell">{{ c.phone|default:'—' }}</td>
                   <td class="d-none d-lg-table-cell"><small class="text-muted">{{ c.created_at|date:'Y-m-d H:i' }}</small></td>
-                  <td class="text-end">
+                  <td class="text-end actions-col">
                     <div class="d-inline-flex gap-2">
                       <a href="{% url 'client_edit' c.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
                       <a href="{% url 'client_delete' c.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
@@ -142,6 +156,54 @@
       </div>
     </div>
   </div>
+
+  {% if request.user.is_superuser %}
+  <div id="pending-requests" class="row g-3 g-lg-4 mt-1">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header border-0 pb-0 d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Pending Access Requests</h5>
+          <span class="badge text-bg-warning">{{ pending_access_count|default:0 }}</span>
+        </div>
+        <div class="card-body">
+          {% if pending_access_count %}
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th class="d-none d-md-table-cell">Requested</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ar in pending_access %}
+                <tr>
+                  <td class="fw-semibold">{{ ar.user.username }}</td>
+                  <td class="d-none d-md-table-cell"><small class="text-muted">{{ ar.created_at|date:'Y-m-d H:i' }}</small></td>
+                  <td class="text-end actions-col">
+                    <form method="post" action="{% url 'dashboard_access_approve' ar.id %}" class="d-inline">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-primary" type="submit">Approve</button>
+                    </form>
+                    <form method="post" action="{% url 'dashboard_access_deny' ar.id %}" class="d-inline ms-1">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Deny</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+            <p class="text-muted mb-0">No pending requests.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <div class="row g-3 g-lg-4 mt-1">
     <div class="col-lg-7">

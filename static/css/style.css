@@ -74,6 +74,22 @@ main.container { animation: fadeIn .3s ease-out; }
   z-index: -1;
 }
 
+/* Hero graphic */
+.hero-graphic-wrapper { position: relative; }
+.hero-graphic {
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 24px 40px rgba(0,0,0,.12));
+  animation: float 8s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@media (max-width: 575.98px) {
+  .hero-graphic { max-width: 85%; }
+}
+
 /* Forms */
 .form-label, .form-check-label { font-weight: 600; }
 [data-theme="light"] .form-label, [data-theme="light"] .form-check-label { color: #111827; }
@@ -121,13 +137,28 @@ main.container { animation: fadeIn .3s ease-out; }
  
 /* Navbar subtle border for separation */
 .navbar.bg-body-tertiary { border-bottom: 1px solid var(--bs-border-color); }
+/* Improve collapsed navbar section separation */
+@media (max-width: 991.98px) {
+  .navbar .border-top { border-top: 1px solid var(--bs-border-color) !important; }
+}
 
 /* Dashboard */
 .list-group-item { background-color: transparent; }
 [data-theme="dark"] .list-group-item { color: var(--bs-body-color); border-color: var(--bs-border-color); }
+/* Keep action buttons tidy in table cells */
+.actions-col { white-space: nowrap; }
+.actions-col .btn { vertical-align: middle; }
+
+/* Bulletproof straight lines across full row width */
+/* Strong, consistent per-cell borders using Bootstrap's table structure */
+.table-aligned { border-collapse: separate; border-spacing: 0; }
+.table-aligned > :not(caption) > * > * { border-bottom: 1px solid var(--bs-border-color) !important; }
+.table-aligned thead > tr > th { border-bottom-width: 2px !important; }
+.table-aligned tbody > tr:last-child > * { border-bottom: 0 !important; }
+.table-aligned td, .table-aligned th { background-clip: padding-box; }
 
 /* Avatars */
-.avatar-sm {
+.avatar-sm { /* kept for backward compat if used elsewhere */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -138,6 +169,14 @@ main.container { animation: fadeIn .3s ease-out; }
   color: #fff;
   font-weight: 700;
   font-size: 0.85rem;
+}
+.avatar-img {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0,0,0,.12);
 }
 
 /* Alerts */

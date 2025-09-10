@@ -1,4 +1,5 @@
 {% extends 'pages/base.html' %}
+{% load static %}
 
 {% block title %}Welcome · CRUD App{% endblock %}
 
@@ -10,7 +11,9 @@
       <p class="lead text-secondary mb-4">A clean Django + Bootstrap starter to manage users and content with a delightful UI.</p>
       {% if user.is_authenticated %}
         <div class="d-flex flex-wrap gap-3">
-          <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg w-100 w-sm-auto">Go to Dashboard</a>
+          {% if user.is_staff %}
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg w-100 w-sm-auto">Go to Dashboard</a>
+          {% endif %}
           <a href="{% url 'logout' %}" class="btn btn-outline-primary btn-lg w-100 w-sm-auto">Logout</a>
           <span class="d-none d-lg-inline align-self-center text-muted">Signed in as {{ user.first_name|default:user.username }}</span>
         </div>
@@ -22,6 +25,9 @@
       {% endif %}
     </div>
     <div class="col-lg-5">
+      <div class="hero-graphic-wrapper mb-4 mb-lg-5 text-center text-lg-end">
+        <img src="{% static 'img/hero-illustration.svg' %}" class="hero-graphic" alt="Colorful abstract shapes illustrating productivity">
+      </div>
       <div class="glass card border-0 shadow hero-card">
         <div class="card-body p-4 p-lg-5">
           <h5 class="mb-3">Why this starter?</h5>
@@ -65,7 +71,7 @@
     </div>
   </div>
 </section>
-{% else %}
+{% elif user.is_staff %}
 <section class="py-5">
   <div class="card shadow-sm border-0">
     <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">

@@ -5,7 +5,7 @@ from .forms import CreateUserForm, LoginForm, ClientForm, UserEditForm, UserProf
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.conf import settings
-from .models import Client
+from .models import Client, AccessRequest
 
 # Create your views here.
 def home(request):
@@ -13,9 +13,13 @@ def home(request):
 
 @login_required(login_url='login')
 def dashboard(request):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
-        messages.error(request, 'The dashboard is restricted to staff users.')
-        return redirect('home')
+    if not request.user.is_staff:
+        # Show access request page instead of redirect
+        existing = AccessRequest.objects.filter(user=request.user, status=AccessRequest.STATUS_PENDING).first()
+        return render(request, 'pages/dashboard_request.html', {
+            'has_pending': bool(existing),
+            'pending_request': existing,
+        })
     users = User.objects.all().order_by('-date_joined')
     # Show all clients so you can manage any of them
     clients = Client.objects.all().order_by('-created_at')
@@ -26,16 +30,21 @@ def dashboard(request):
     recent = [
         {"title": f"Newest user: {u.username}", "time": u.date_joined.strftime('%Y-%m-%d')} for u in users[:3]
     ]
-    return render(request, 'pages/dashboard.html', {
+    context = {
         'stats': stats,
         'recent': recent,
         'users': users,
         'clients': clients,
-    })
+    }
+    if request.user.is_superuser:
+        pending_access = AccessRequest.objects.filter(status=AccessRequest.STATUS_PENDING)
+        context['pending_access'] = pending_access
+        context['pending_access_count'] = pending_access.count()
+    return render(request, 'pages/dashboard.html', context)
 
 @login_required(login_url='login')
 def new_project(request):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     if request.method == 'POST':
@@ -49,7 +58,7 @@ def new_project(request):
 
 @login_required(login_url='login')
 def new_task(request):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     if request.method == 'POST':
@@ -63,7 +72,7 @@ def new_task(request):
 
 @login_required(login_url='login')
 def new_user(request):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     FormClass = AdminCreateUserForm if request.user.is_staff else CreateUserForm
@@ -87,7 +96,7 @@ def new_user(request):
 
 @login_required(login_url='login')
 def new_client(request):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     if request.method == 'POST':
@@ -104,7 +113,7 @@ def new_client(request):
 
 @login_required(login_url='login')
 def edit_client(request, pk):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     # Allow editing any client
@@ -121,7 +130,7 @@ def edit_client(request, pk):
 
 @login_required(login_url='login')
 def delete_client(request, pk):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     # Allow deleting any client
@@ -135,7 +144,7 @@ def delete_client(request, pk):
 
 @login_required(login_url='login')
 def edit_user(request, pk):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     usr = get_object_or_404(User, pk=pk)
@@ -146,6 +155,11 @@ def edit_user(request, pk):
         form = FormClass(request.POST, instance=usr)
         if form.is_valid():
             form.save()
+            # Ensure superusers remain staff for consistent permissions
+            usr.refresh_from_db()
+            if usr.is_superuser and not usr.is_staff:
+                usr.is_staff = True
+                usr.save(update_fields=["is_staff"])
             messages.success(request, f'User "{usr.username}" updated.')
             return redirect('dashboard')
     else:
@@ -154,12 +168,21 @@ def edit_user(request, pk):
 
 @login_required(login_url='login')
 def delete_user(request, pk):
-    if getattr(settings, 'DASHBOARD_STAFF_ONLY', False) and not request.user.is_staff:
+    if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
         return redirect('home')
     usr = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
         username = usr.username
+        # Protect superusers from admin deletion and prevent deleting the last superuser
+        if usr.is_superuser:
+            if not request.user.is_superuser:
+                messages.error(request, 'Only superusers can delete superusers.')
+                return redirect('dashboard')
+            has_other_su = User.objects.filter(is_superuser=True).exclude(pk=usr.pk).exists()
+            if not has_other_su:
+                messages.error(request, 'Cannot delete the last superuser.')
+                return redirect('dashboard')
         usr.delete()
         if usr == request.user or username == request.user.username:
             messages.success(request, 'Your account was deleted. You have been logged out.')
@@ -171,10 +194,54 @@ def delete_user(request, pk):
     return render(request, 'pages/delete_user.html', { 'usr': usr })
 
 @login_required(login_url='login')
+def request_dashboard_access(request):
+    # Allow any authenticated user to request access
+    if request.user.is_staff:
+        return redirect('dashboard')
+    ar = AccessRequest.objects.filter(user=request.user, status=AccessRequest.STATUS_PENDING).first()
+    if not ar:
+        ar = AccessRequest.objects.create(user=request.user, status=AccessRequest.STATUS_PENDING)
+        messages.info(request, 'Access request submitted. An admin will review it shortly.')
+    return redirect('dashboard')
+
+@login_required(login_url='login')
+def approve_access_request(request, pk):
+    if request.method != 'POST':
+        return redirect('dashboard')
+    if not request.user.is_superuser:
+        messages.error(request, 'Only superusers can approve access requests.')
+        return redirect('dashboard')
+    ar = get_object_or_404(AccessRequest, pk=pk, status=AccessRequest.STATUS_PENDING)
+    u = ar.user
+    u.is_staff = True
+    u.save(update_fields=['is_staff'])
+    ar.status = AccessRequest.STATUS_APPROVED
+    from django.utils import timezone
+    ar.responded_at = timezone.now()
+    ar.save(update_fields=['status','responded_at'])
+    messages.success(request, f'Granted dashboard access to {u.username}.')
+    return redirect('dashboard')
+
+@login_required(login_url='login')
+def deny_access_request(request, pk):
+    if request.method != 'POST':
+        return redirect('dashboard')
+    if not request.user.is_superuser:
+        messages.error(request, 'Only superusers can deny access requests.')
+        return redirect('dashboard')
+    ar = get_object_or_404(AccessRequest, pk=pk, status=AccessRequest.STATUS_PENDING)
+    from django.utils import timezone
+    ar.status = AccessRequest.STATUS_DENIED
+    ar.responded_at = timezone.now()
+    ar.save(update_fields=['status','responded_at'])
+    messages.info(request, f'Denied dashboard access for {ar.user.username}.')
+    return redirect('dashboard')
+
+@login_required(login_url='login')
 def toggle_user_staff(request, pk):
     if request.method != 'POST':
         return redirect('dashboard')
-    # Only staff or superuser may toggle staff
+    # Only staff or superuser may toggle staff (and require staff access to dashboard)
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, 'You do not have permission to change staff status.')
         return redirect('dashboard')
