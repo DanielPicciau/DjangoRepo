@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 from django import forms 
 from django.forms.widgets import PasswordInput, TextInput
-from .models import Client
+from .models import Client, Record
 
 class CreateUserForm(UserCreationForm):
     class Meta:
@@ -91,3 +91,14 @@ class AdminCreateUserForm(CreateUserForm):
         if commit:
             user.save()
         return user
+
+
+class RecordForm(forms.ModelForm):
+    class Meta:
+        model = Record
+        fields = ("title", "description")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['title'].widget = TextInput(attrs={'class': 'form-control mb-3', 'placeholder': 'Title'})
+        self.fields['description'].widget = forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Description (optional)'})

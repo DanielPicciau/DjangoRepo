@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, authenticate, logout
 from django.contrib import messages
-from .forms import CreateUserForm, LoginForm, ClientForm, UserEditForm, UserProfileForm, AdminCreateUserForm
+from .forms import CreateUserForm, LoginForm, ClientForm, UserEditForm, UserProfileForm, AdminCreateUserForm, RecordForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.conf import settings
-from .models import Client, AccessRequest
+from .models import Client, AccessRequest, Record
 
 # Create your views here.
 def home(request):
@@ -21,11 +21,13 @@ def dashboard(request):
             'pending_request': existing,
         })
     users = User.objects.all().order_by('-date_joined')
-    # Show all clients so you can manage any of them
+    # Show all clients and records so you can manage any of them
     clients = Client.objects.all().order_by('-created_at')
+    records = Record.objects.all().order_by('-created_at')
     stats = [
         {"label": "Total Users", "value": users.count()},
         {"label": "Your Clients", "value": clients.count()},
+        {"label": "Total Records", "value": records.count()},
     ]
     recent = [
         {"title": f"Newest user: {u.username}", "time": u.date_joined.strftime('%Y-%m-%d')} for u in users[:3]
@@ -35,6 +37,7 @@ def dashboard(request):
         'recent': recent,
         'users': users,
         'clients': clients,
+        'records': records,
     }
     if request.user.is_superuser:
         pending_access = AccessRequest.objects.filter(status=AccessRequest.STATUS_PENDING)
@@ -112,6 +115,23 @@ def new_client(request):
     return render(request, 'pages/new_client.html', { 'form': form })
 
 @login_required(login_url='login')
+def new_record(request):
+    if not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
+    if request.method == 'POST':
+        form = RecordForm(request.POST)
+        if form.is_valid():
+            rec = form.save(commit=False)
+            rec.created_by = request.user
+            rec.save()
+            messages.success(request, f'Record "{rec.title}" added.')
+            return redirect('dashboard')
+    else:
+        form = RecordForm()
+    return render(request, 'pages/new_record.html', { 'form': form })
+
+@login_required(login_url='login')
 def edit_client(request, pk):
     if not request.user.is_staff:
         messages.error(request, 'This action is restricted to staff users.')
@@ -141,6 +161,19 @@ def delete_client(request, pk):
         messages.success(request, f'Client "{name}" removed.')
         return redirect('dashboard')
     return render(request, 'pages/delete_client.html', { 'client': client })
+
+@login_required(login_url='login')
+def delete_record(request, pk):
+    if not request.user.is_staff:
+        messages.error(request, 'This action is restricted to staff users.')
+        return redirect('home')
+    rec = get_object_or_404(Record, pk=pk)
+    if request.method == 'POST':
+        title = rec.title
+        rec.delete()
+        messages.success(request, f'Record "{title}" removed.')
+        return redirect('dashboard')
+    return render(request, 'pages/delete_record.html', { 'record': rec })
 
 @login_required(login_url='login')
 def edit_user(request, pk):
