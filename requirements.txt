@@ -1,7 +1,7 @@
 asgiref==3.9.1
-# django-bootstrap-v5 1.0.11 supports Django <5.0
-Django==4.2.24
+# Upgrade to Django 5.2 for Python 3.13 compatibility
+Django==5.2.3
 sqlparse==0.5.3
-django-bootstrap-v5==1.0.11
+# Removed django-bootstrap-v5 (not used directly; crispy handles Bootstrap rendering)
 django-crispy-forms==2.4
 crispy-bootstrap5==2025.6
